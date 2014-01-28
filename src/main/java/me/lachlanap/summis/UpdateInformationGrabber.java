@@ -42,35 +42,35 @@ public class UpdateInformationGrabber {
         public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
-            thread.setName("Summis Client: Single Thread Executor");
+            thread.setName("Summis Client: Update Information HTTP Executor");
             return thread;
         }
     });
 
     private final Configuration config;
-    private Future<Object> future;
+    private Future<UpdateInformation> future;
 
     public UpdateInformationGrabber(Configuration config) {
-        throw new UnsupportedOperationException("UpdateInformationGrabber.UpdateInformationGrabber not supported yet.");
+        this.config = config;
     }
 
     public void begin() {
-        future = EXECUTOR.submit(new Callable<Object>() {
+        future = EXECUTOR.submit(new Callable<UpdateInformation>() {
             @Override
-            public Object call() throws Exception {
+            public UpdateInformation call() throws Exception {
                 return getVersionInformation(config);
             }
         });
     }
 
-    private static Object getVersionInformation(Configuration config) {
+    private UpdateInformation getVersionInformation(Configuration config) {
         String serverAddress = config.getString("server.address");
         String project = config.getString("server.project");
 
         final int VERSION = 1;
         String updateSourceUrl = serverAddress + String.format("%d/project/%s/%s.json", VERSION, project, project);
 
-        Object versionStatus = null;
+        UpdateInformation versionStatus = null;
         HttpRequestFactory factory = new NetHttpTransport().createRequestFactory();
         try {
             HttpRequest request = factory.buildGetRequest(new GenericUrl(updateSourceUrl));
@@ -93,7 +93,7 @@ public class UpdateInformationGrabber {
         return versionStatus;
     }
 
-    public Object get() throws InterruptedException {
+    public UpdateInformation get() throws InterruptedException {
         try {
             return future.get();
         } catch (ExecutionException ee) {

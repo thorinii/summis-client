@@ -23,41 +23,14 @@
  */
 package me.lachlanap.summis;
 
-import me.lachlanap.config.Configuration;
-
 /**
  *
- * @author lachlan
+ * @author Lachlan Phillips
  */
-public class Main {
+public class UpdateInformation {
 
-    public static void main(String[] args) throws InterruptedException {
-        Configuration config = Configuration.builder()
-                .loadBase("core.properties").build();
-
-        UpdateInformationGrabber uig = new UpdateInformationGrabber(config);
-        uig.begin();
-
-        VersionReader versionReader = new VersionReader(config);
-        UpdateInformation versionInfo = uig.get();
-
-        switch (versionReader.getPresence()) {
-            case NotThere:
-                // Grab Latest by nondiff
-                break;
-            case Corrupt:
-                // Ask to update
-                // then Grab Latest by nondiff
-                break;
-            case Present:
-                Version version = versionReader.getVersion();
-                if (versionInfo.getLatest().isGreaterThan(version)) {
-                    // Ask to update
-                    // then Grab Latest by diff
-                }
-                break;
-        }
-
-        // launch app
+    public Version getLatest() {
+        throw new UnsupportedOperationException("UpdateInformation.getLatest not supported yet.");
     }
+
 }
