@@ -23,6 +23,8 @@
  */
 package me.lachlanap.summis;
 
+import java.util.Collections;
+import java.util.List;
 import me.lachlanap.summis.downloader.MemoryUnit;
 
 /**
@@ -37,25 +39,53 @@ public class UpdateInformation {
     }
 
     public FileSet getDiffFileset() {
-        throw new UnsupportedOperationException("UpdateInformation.getDiffFileset not supported yet.");
+        return new FileSet(Collections.EMPTY_LIST);
     }
 
     public FileSet getFullFileset() {
-        throw new UnsupportedOperationException("UpdateInformation.getFullFileset not supported yet.");
+        return new FileSet(Collections.EMPTY_LIST);
     }
 
     public static class FileSet {
 
-        public Iterable<FileInfo> getFiles() {
-            throw new UnsupportedOperationException("FileSet.getFiles not supported yet.");
+        private final List<FileInfo> fileInfos;
+        private final MemoryUnit totalSize;
+
+        public FileSet(List<FileInfo> fileInfos) {
+            this.fileInfos = fileInfos;
+
+            MemoryUnit tmp = new MemoryUnit(0);
+            for (FileInfo info : fileInfos) {
+                tmp = tmp.plus(info.getSize());
+            }
+            totalSize = tmp;
         }
 
+        public List<FileInfo> getFiles() {
+            return Collections.unmodifiableList(fileInfos);
+        }
+
+        public int getFileCount() {
+            return fileInfos.size();
+        }
+
+        public MemoryUnit getTotalSize() {
+            return totalSize;
+        }
     }
 
     public static class FileInfo {
 
         public MemoryUnit getSize() {
             throw new UnsupportedOperationException("FileInfo.getSize not supported yet.");
+        }
+
+        public String getUrl() {
+            throw new UnsupportedOperationException("FileInfo.getUrl not supported yet.");
+        }
+
+        public String getName() {
+            throw new UnsupportedOperationException("FileInfo.getName not supported yet.");
         }
     }
 }

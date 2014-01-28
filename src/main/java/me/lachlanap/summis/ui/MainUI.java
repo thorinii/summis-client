@@ -32,6 +32,7 @@ import me.lachlanap.summis.ResponseSource;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
 import me.lachlanap.summis.downloader.DownloadListener;
+import me.lachlanap.summis.downloader.MemoryUnit;
 
 /**
  *
@@ -114,9 +115,7 @@ public class MainUI {
                     c.remove(actionPanel);
                     c.add(infoPanel, BorderLayout.CENTER);
 
-                    infoPanel.setMessage("Error: "
-                                         + ((e.getCause() == null) ? e.getClass() : e.getCause().getClass()),
-                                         e.toString());
+                    infoPanel.setMessage(e);
                     window.pack();
                     window.setMinimumSize(new Dimension(window.getSize()));
                 }
@@ -133,7 +132,7 @@ public class MainUI {
                 }
             });
 
-            return null;
+            return new UIDownloadNotifier();
         }
 
         @Override
@@ -158,6 +157,50 @@ public class MainUI {
                 }
             });
         }
+    }
+
+    private class UIDownloadNotifier implements DownloadListener {
+
+        @Override
+        public void startingDownload(final int numberOfFiles, final MemoryUnit totalSize) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    actionPanel.startingDownload(numberOfFiles, totalSize);
+                }
+            });
+        }
+
+        @Override
+        public void completedADownload(final MemoryUnit size) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    actionPanel.completedADownload(size);
+                }
+            });
+        }
+
+        @Override
+        public void startingVerify(final int numberOfFiles) {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    actionPanel.startingVerify(numberOfFiles);
+                }
+            });
+        }
+
+        @Override
+        public void completedAVerify() {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    actionPanel.completedAVerify();
+                }
+            });
+        }
+
     }
 
     static {

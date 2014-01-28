@@ -27,12 +27,18 @@ import javax.swing.JPanel;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
 import me.lachlanap.summis.downloader.DownloadListener;
+import me.lachlanap.summis.downloader.MemoryUnit;
 
 /**
  *
  * @author Lachlan Phillips
  */
-public class ActionPanel extends JPanel implements StatusListener {
+public class ActionPanel extends JPanel implements StatusListener, DownloadListener {
+
+    private int totalFiles;
+    private MemoryUnit totalSize;
+    private int currentCompleteFiles;
+    private MemoryUnit runningTotal;
 
     /**
      * Creates new form ActionPanel
@@ -90,7 +96,8 @@ public class ActionPanel extends JPanel implements StatusListener {
 
     @Override
     public DownloadListener downloading() {
-        progressBar.setString("Downloading... 0%");
+        progressBar.setIndeterminate(true);
+        progressBar.setString("Downloading...");
         return null;
     }
 
@@ -104,9 +111,44 @@ public class ActionPanel extends JPanel implements StatusListener {
         progressBar.setString("Done");
     }
 
+    @Override
+    public void startingDownload(int numberOfFiles, MemoryUnit totalSize) {
+        this.totalFiles = numberOfFiles;
+        this.totalSize = totalSize;
+
+        currentCompleteFiles = 0;
+        runningTotal = MemoryUnit.ZERO;
+
+        refreshDownloadStatus();
+    }
+
+    @Override
+    public void completedADownload(MemoryUnit size) {
+        currentCompleteFiles++;
+        runningTotal = runningTotal.plus(size);
+    }
+
+    @Override
+    public void startingVerify(int numberOfFiles) {
+        throw new UnsupportedOperationException("ActionPanel.startingVerify not supported yet.");
+    }
+
+    @Override
+    public void completedAVerify() {
+        throw new UnsupportedOperationException("ActionPanel.completedAVerify not supported yet.");
+    }
+
+    private void refreshDownloadStatus() {
+        progressBar.setString(
+                String.format("Downloaded %d of %d files, %s of %s...",
+                              currentCompleteFiles, totalFiles,
+                              runningTotal.toString(), totalSize.toString()));
+        progressBar.setValue((int) (runningTotal.inBytes() * 100 / totalSize.inBytes()));
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
+
 
 }

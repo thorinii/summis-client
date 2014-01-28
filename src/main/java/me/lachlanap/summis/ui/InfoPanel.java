@@ -24,6 +24,8 @@
 package me.lachlanap.summis.ui;
 
 import java.awt.Dimension;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JLabel;
@@ -46,6 +48,16 @@ public class InfoPanel extends javax.swing.JPanel {
     public void setMessage(String title, String message) {
         headerLbl.setText("<html>" + title);
         messageLbl.setText("<html>" + message);
+    }
+
+    public void setMessage(Exception exception) {
+        StringWriter stringWriter = new StringWriter();
+        try (PrintWriter writer = new PrintWriter(stringWriter)) {
+            exception.printStackTrace();
+            exception.printStackTrace(writer);
+        }
+
+        setMessage(exception.getClass().getName(), stringWriter.toString());
     }
 
     /**

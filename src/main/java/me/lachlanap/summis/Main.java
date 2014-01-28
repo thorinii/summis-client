@@ -23,6 +23,8 @@
  */
 package me.lachlanap.summis;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import me.lachlanap.config.Configuration;
 import me.lachlanap.summis.ResponseSource.Choice;
 import me.lachlanap.summis.downloader.DownloadListener;
@@ -48,18 +50,28 @@ public class Main {
     private static void run(Configuration config,
                             StatusListener statusListener,
                             ResponseSource responseSource) throws InterruptedException {
+        Path installRoot;
+        if (config.getString("install.into-user-dir").equals("true"))
+            installRoot = Paths.get(System.getProperty("user.home"));
+        else
+            installRoot = Paths.get(System.getProperty("user.dir"));
+
+
         UpdateInformationGrabber uig = new UpdateInformationGrabber(config);
 
         statusListener.checking();
         uig.begin();
 
-        VersionReader versionReader = new VersionReader(config);
+        VersionReader versionReader = new VersionReader(installRoot);
 
         try {
             UpdateInformation versionInfo = uig.get();
             statusListener.foundLatest(versionInfo.getLatest());
 
-            updateIfNeedBe(versionReader, statusListener, responseSource, versionInfo);
+            updateIfNeedBe(installRoot,
+                           versionReader,
+                           statusListener, responseSource,
+                           versionInfo);
 
             statusListener.launching();
         } catch (RuntimeException re) {
@@ -74,7 +86,8 @@ public class Main {
         }
     }
 
-    private static void updateIfNeedBe(VersionReader versionReader,
+    private static void updateIfNeedBe(Path installRoot,
+                                       VersionReader versionReader,
                                        StatusListener statusListener,
                                        ResponseSource responseSource,
                                        UpdateInformation versionInfo) throws InterruptedException {
@@ -82,14 +95,14 @@ public class Main {
         switch (versionReader.getPresence()) {
             case NotThere:
                 DownloadListener downloadListener = statusListener.downloading();
-                downloader = new Downloader(versionInfo, downloadListener, true);
+                downloader = new Downloader(installRoot, versionInfo, downloadListener, true);
                 break;
             case Corrupt:
                 ResponseSource.Choice choice = responseSource.updateOrLaunch();
 
                 if (choice == Choice.Update) {
                     downloadListener = statusListener.downloading();
-                    downloader = new Downloader(versionInfo, downloadListener, true);
+                    downloader = new Downloader(installRoot, versionInfo, downloadListener, true);
                 }
                 break;
             case Present:
@@ -98,7 +111,7 @@ public class Main {
                     choice = responseSource.updateOrLaunch();
                     if (choice == Choice.Update) {
                         downloadListener = statusListener.downloading();
-                        downloader = new Downloader(versionInfo, downloadListener, false);
+                        downloader = new Downloader(installRoot, versionInfo, downloadListener, false);
                     }
                 }
                 break;

@@ -31,26 +31,77 @@ public class MemoryUnit {
 
     public enum Prefix {
 
-        Byte(1),
-        Kilo(Byte.scale * 1024),
-        Mega(Kilo.scale * 1024),
-        Giga(Mega.scale * 1024),
-        Tera(Giga.scale * 1024);
+        Byte(1, "B"),
+        Kilo(Byte.scale * 1024, "KB"),
+        Mega(Kilo.scale * 1024, "MB"),
+        Giga(Mega.scale * 1024, "GB"),
+        Tera(Giga.scale * 1024, "TB");
 
-        private Prefix(long scale) {
+        private Prefix(long scale, String abbreviation) {
             this.scale = scale;
+            this.abbreviation = abbreviation;
         }
 
-        private final long scale;
+        public final long scale;
+        public final String abbreviation;
     }
+
+    public static final MemoryUnit ZERO = new MemoryUnit(0);
 
     private final long bytes;
 
     public MemoryUnit(long bytes) {
+        if (bytes < 0)
+            throw new IllegalArgumentException("Cannot have a negative memory space: " + bytes + "bytes");
         this.bytes = bytes;
     }
 
     public MemoryUnit(Prefix prefix, int count) {
         this.bytes = prefix.scale * count;
+    }
+
+    @Override
+    public int hashCode() {
+        return 237 + (int) (this.bytes ^ (this.bytes >>> 32));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final MemoryUnit other = (MemoryUnit) obj;
+        return bytes == other.bytes;
+    }
+
+    public MemoryUnit plus(MemoryUnit unit) {
+        return new MemoryUnit(bytes + unit.bytes);
+    }
+
+    public long inBytes() {
+        return bytes;
+    }
+
+    public float in(Prefix prefix) {
+        return bytes / prefix.scale;
+    }
+
+    public Prefix bestFittingPrefix() {
+        if (bytes / Prefix.Tera.scale > 1)
+            return Prefix.Tera;
+        if (bytes / Prefix.Giga.scale > 1)
+            return Prefix.Giga;
+        if (bytes / Prefix.Mega.scale > 1)
+            return Prefix.Mega;
+        if (bytes / Prefix.Kilo.scale > 1)
+            return Prefix.Kilo;
+        return Prefix.Byte;
+    }
+
+    @Override
+    public String toString() {
+        Prefix bestFitting = bestFittingPrefix();
+        return in(bestFitting) + bestFitting.abbreviation;
     }
 }

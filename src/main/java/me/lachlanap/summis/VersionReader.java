@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import me.lachlanap.config.Configuration;
 
 /**
  *
@@ -42,22 +40,18 @@ public class VersionReader {
         NotThere, Corrupt, Present
     }
 
-    private final Configuration config;
+    private final Path installRoot;
 
     private PresenceStatus status;
     private Version version;
 
-    public VersionReader(Configuration config) {
-        this.config = config;
+    public VersionReader(Path installRoot) {
+        this.installRoot = installRoot;
         load();
     }
 
     private void load() {
-        boolean useUserDir = config.getString("install.into-user-dir").equals("true");
-
-        String baseDir = useUserDir ? System.getProperty("user.home") : System.getProperty("user.dir");
-
-        Path versionFile = Paths.get(baseDir, "version");
+        Path versionFile = installRoot.resolve("version");
 
         if (!Files.exists(versionFile)) {
             status = PresenceStatus.NotThere;

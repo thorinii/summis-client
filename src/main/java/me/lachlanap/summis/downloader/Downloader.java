@@ -23,6 +23,12 @@
  */
 package me.lachlanap.summis.downloader;
 
+import com.google.api.client.http.*;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -39,7 +45,9 @@ import me.lachlanap.summis.UpdateInformation.FileSet;
  */
 public class Downloader {
 
-    private static final ExecutorService EXECUTOR
+    private static final String BINARY_DIRECTORY = "bin";
+
+    private final ExecutorService EXECUTOR
             = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(),
                                            new ThreadFactory() {
 
@@ -52,37 +60,62 @@ public class Downloader {
                                                }
                                            });
 
+    private final Path installRoot;
+    private final Path binaryRoot;
+    private final Path tmpRoot;
     private final UpdateInformation versionInfo;
     private final DownloadListener downloadListener;
-    private final boolean useDiff;
+    private final boolean downloadFresh;
 
-    public Downloader(UpdateInformation versionInfo, DownloadListener downloadListener, boolean useDiff) {
+    public Downloader(Path installRoot,
+                      UpdateInformation versionInfo,
+                      DownloadListener downloadListener,
+                      boolean downloadFresh) {
+        this.installRoot = installRoot;
+        this.binaryRoot = installRoot.resolve(BINARY_DIRECTORY);
+        this.tmpRoot = installRoot.resolve("tmp");
+
         this.versionInfo = versionInfo;
         this.downloadListener = downloadListener;
-        this.useDiff = useDiff;
+        this.downloadFresh = downloadFresh;
     }
 
 
     public void go() throws InterruptedException {
         FileSet fileSet = getFileSet();
 
-        int numberOfFiles = 1;
-        MemoryUnit totalSize = null;
+        int numberOfFiles = fileSet.getFileCount();
+        MemoryUnit totalSize = fileSet.getTotalSize();
+
+        if (numberOfFiles == 0)
+            return;
+
+        deleteTmpDirectory();
 
         downloadListener.startingDownload(numberOfFiles, totalSize);
         downloadFiles(fileSet);
 
         downloadListener.startingVerify(numberOfFiles);
-        verifyFiles(numberOfFiles, fileSet);
+        verifyFiles(fileSet);
+
+        deleteTmpDirectory();
     }
 
     private FileSet getFileSet() {
         FileSet fileSet;
-        if (useDiff)
-            fileSet = versionInfo.getDiffFileset();
-        else
+        if (downloadFresh)
             fileSet = versionInfo.getFullFileset();
+        else
+            fileSet = versionInfo.getDiffFileset();
         return fileSet;
+    }
+
+    private void deleteTmpDirectory() {
+        try {
+            Files.deleteIfExists(tmpRoot);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to delete tmp download directory", ex);
+        }
     }
 
     private void downloadFiles(FileSet fileSet) throws InterruptedException {
@@ -92,7 +125,7 @@ public class Downloader {
         EXECUTOR.invokeAll(downloaders);
     }
 
-    private void verifyFiles(int numberOfFiles, FileSet fileSet) throws InterruptedException {
+    private void verifyFiles(FileSet fileSet) throws InterruptedException {
         List<Callable<Void>> verifiers = new ArrayList<>();
         for (FileInfo info : fileSet.getFiles())
             verifiers.add(new VerifierCallable(info));
@@ -101,7 +134,7 @@ public class Downloader {
 
     private class DownloaderCallable implements Callable<Void> {
 
-        final FileInfo info;
+        private final FileInfo info;
 
         public DownloaderCallable(FileInfo info) {
             this.info = info;
@@ -109,14 +142,44 @@ public class Downloader {
 
         @Override
         public Void call() throws Exception {
+            String filename = info.getName();
+            GenericUrl downloadUrl = new GenericUrl(info.getUrl());
+            Path destination = binaryRoot.resolve(filename);
+            Path tmpDownloadTo = tmpRoot.resolve(filename);
+
+            download(downloadUrl, tmpDownloadTo);
+            checkIsRightSize(tmpDownloadTo);
+
+            Files.move(tmpDownloadTo, destination);
+
             downloadListener.completedADownload(info.getSize());
-            throw new UnsupportedOperationException(".call not supported yet.");
+            return null;
+        }
+
+        private void checkIsRightSize(Path tmpDownloadTo) throws IOException, RuntimeException {
+            MemoryUnit actualSize = new MemoryUnit(Files.size(tmpDownloadTo));
+            if (!actualSize.equals(info.getSize()))
+                throw new RuntimeException("Size of " + info.getName()
+                                           + " does not match expected. "
+                                           + "Expected: " + info.getSize()
+                                           + " got: " + actualSize);
+        }
+
+        private void download(GenericUrl downloadUrl, Path tmpDownloadTo) throws IOException {
+            HttpRequestFactory factory = new NetHttpTransport().createRequestFactory();
+            HttpRequest request = factory.buildGetRequest(downloadUrl);
+            request.setReadTimeout(3000);
+            try (OutputStream os = Files.newOutputStream(tmpDownloadTo)) {
+                HttpResponse response = request.execute();
+                response.download(os);
+                response.disconnect();
+            }
         }
     }
 
     private class VerifierCallable implements Callable<Void> {
 
-        final FileInfo info;
+        private final FileInfo info;
 
         public VerifierCallable(FileInfo info) {
             this.info = info;
