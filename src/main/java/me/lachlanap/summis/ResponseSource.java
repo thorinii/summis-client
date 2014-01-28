@@ -27,11 +27,15 @@ package me.lachlanap.summis;
  *
  * @author Lachlan Phillips
  */
-public class UpdateInformation {
+public interface ResponseSource {
 
-    public Version getLatest() {
-        //throw new UnsupportedOperationException("UpdateInformation.getLatest not supported yet.");
-        return new Version(1, 2, 3);
+
+    public enum Choice {
+
+        Launch, Update, Quit
     }
 
+    public Choice updateOrLaunch() throws InterruptedException;
+
+    public Choice launchOrQuit() throws InterruptedException;
 }

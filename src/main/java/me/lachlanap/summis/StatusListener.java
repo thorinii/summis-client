@@ -27,11 +27,18 @@ package me.lachlanap.summis;
  *
  * @author Lachlan Phillips
  */
-public class UpdateInformation {
+public interface StatusListener {
 
-    public Version getLatest() {
-        //throw new UnsupportedOperationException("UpdateInformation.getLatest not supported yet.");
-        return new Version(1, 2, 3);
-    }
+    public void checking();
+
+    public void foundLatest(Version latest);
+
+    public void errorChecking(Exception e);
+
+    public Object downloading();
+
+    public void launching();
+
+    public void finished();
 
 }

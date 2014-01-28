@@ -63,7 +63,7 @@ public class UpdateInformationGrabber {
         });
     }
 
-    private UpdateInformation getVersionInformation(Configuration config) {
+    private UpdateInformation getVersionInformation(Configuration config) throws IOException {
         String serverAddress = config.getString("server.address");
         String project = config.getString("server.project");
 
@@ -86,8 +86,6 @@ public class UpdateInformationGrabber {
             if (hre.getStatusCode() == 404) {
                 System.out.println(updateSourceUrl + " does not exist");
             }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
         }
 
         return versionStatus;
@@ -95,9 +93,13 @@ public class UpdateInformationGrabber {
 
     public UpdateInformation get() throws InterruptedException {
         try {
-            return future.get();
+            future.get();
+            return new UpdateInformation();
         } catch (ExecutionException ee) {
-            throw (RuntimeException) ee.getCause();
+            if (ee.getCause() instanceof RuntimeException)
+                throw (RuntimeException) ee.getCause();
+            else
+                throw new RuntimeException(ee.getCause());
         }
     }
 

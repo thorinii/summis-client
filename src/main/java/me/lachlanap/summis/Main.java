@@ -24,6 +24,8 @@
 package me.lachlanap.summis;
 
 import me.lachlanap.config.Configuration;
+import me.lachlanap.summis.ResponseSource.Choice;
+import me.lachlanap.summis.ui.MainUI;
 
 /**
  *
@@ -35,29 +37,63 @@ public class Main {
         Configuration config = Configuration.builder()
                 .loadBase("core.properties").build();
 
+        MainUI mainUI = new MainUI();
+        run(config,
+            mainUI.getStatusListener(),
+            mainUI.getResponseSource());
+    }
+
+    private static void run(Configuration config,
+                            StatusListener statusListener,
+                            ResponseSource responseSource) throws InterruptedException {
         UpdateInformationGrabber uig = new UpdateInformationGrabber(config);
+
+        statusListener.checking();
         uig.begin();
 
         VersionReader versionReader = new VersionReader(config);
-        UpdateInformation versionInfo = uig.get();
 
+        try {
+            UpdateInformation versionInfo = uig.get();
+            statusListener.foundLatest(versionInfo.getLatest());
+
+            updateIfNeedBe(versionReader, statusListener, responseSource, versionInfo);
+
+            statusListener.launching();
+        } catch (RuntimeException re) {
+            statusListener.errorChecking(re);
+
+            ResponseSource.Choice choice = responseSource.launchOrQuit();
+            if (choice == Choice.Launch) {
+                statusListener.launching();
+            }
+        } finally {
+            statusListener.finished();
+        }
+    }
+
+    private static void updateIfNeedBe(VersionReader versionReader, StatusListener statusListener, ResponseSource responseSource, UpdateInformation versionInfo) throws InterruptedException {
         switch (versionReader.getPresence()) {
             case NotThere:
+                Object downloadListener = statusListener.downloading();
                 // Grab Latest by nondiff
                 break;
             case Corrupt:
-                // Ask to update
-                // then Grab Latest by nondiff
+                ResponseSource.Choice choice = responseSource.updateOrLaunch();
+
+                if (choice == Choice.Update) {
+                    downloadListener = statusListener.downloading();
+                }
                 break;
             case Present:
                 Version version = versionReader.getVersion();
                 if (versionInfo.getLatest().isGreaterThan(version)) {
-                    // Ask to update
-                    // then Grab Latest by diff
+                    choice = responseSource.updateOrLaunch();
+                    if (choice == Choice.Update) {
+                        downloadListener = statusListener.downloading();
+                    }
                 }
                 break;
         }
-
-        // launch app
     }
 }
