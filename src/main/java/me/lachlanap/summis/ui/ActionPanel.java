@@ -26,6 +26,7 @@ package me.lachlanap.summis.ui;
 import javax.swing.JPanel;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
+import me.lachlanap.summis.downloader.DownloadListener;
 
 /**
  *
@@ -88,7 +89,7 @@ public class ActionPanel extends JPanel implements StatusListener {
     }
 
     @Override
-    public Object downloading() {
+    public DownloadListener downloading() {
         progressBar.setString("Downloading... 0%");
         return null;
     }

@@ -23,6 +23,8 @@
  */
 package me.lachlanap.summis;
 
+import me.lachlanap.summis.downloader.MemoryUnit;
+
 /**
  *
  * @author Lachlan Phillips
@@ -31,7 +33,29 @@ public class UpdateInformation {
 
     public Version getLatest() {
         //throw new UnsupportedOperationException("UpdateInformation.getLatest not supported yet.");
-        return new Version(1, 2, 3);
+        return new Version(1, 2, 4);
     }
 
+    public FileSet getDiffFileset() {
+        throw new UnsupportedOperationException("UpdateInformation.getDiffFileset not supported yet.");
+    }
+
+    public FileSet getFullFileset() {
+        throw new UnsupportedOperationException("UpdateInformation.getFullFileset not supported yet.");
+    }
+
+    public static class FileSet {
+
+        public Iterable<FileInfo> getFiles() {
+            throw new UnsupportedOperationException("FileSet.getFiles not supported yet.");
+        }
+
+    }
+
+    public static class FileInfo {
+
+        public MemoryUnit getSize() {
+            throw new UnsupportedOperationException("FileInfo.getSize not supported yet.");
+        }
+    }
 }

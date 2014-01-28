@@ -21,26 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.lachlanap.summis;
-
-import me.lachlanap.summis.downloader.DownloadListener;
+package me.lachlanap.summis.downloader;
 
 /**
  *
  * @author Lachlan Phillips
  */
-public interface StatusListener {
+public interface DownloadListener {
 
-    public void checking();
+    public void startingDownload(int numberOfFiles, MemoryUnit totalSize);
 
-    public void foundLatest(Version latest);
 
-    public void errorChecking(Exception e);
+    public void completedADownload(MemoryUnit size);
 
-    public DownloadListener downloading();
+    public void startingVerify(int numberOfFiles);
 
-    public void launching();
-
-    public void finished();
+    public void completedAVerify();
 
 }

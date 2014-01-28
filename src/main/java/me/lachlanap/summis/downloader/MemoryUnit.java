@@ -21,26 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.lachlanap.summis;
-
-import me.lachlanap.summis.downloader.DownloadListener;
+package me.lachlanap.summis.downloader;
 
 /**
  *
  * @author Lachlan Phillips
  */
-public interface StatusListener {
+public class MemoryUnit {
 
-    public void checking();
+    public enum Prefix {
 
-    public void foundLatest(Version latest);
+        Byte(1),
+        Kilo(Byte.scale * 1024),
+        Mega(Kilo.scale * 1024),
+        Giga(Mega.scale * 1024),
+        Tera(Giga.scale * 1024);
 
-    public void errorChecking(Exception e);
+        private Prefix(long scale) {
+            this.scale = scale;
+        }
 
-    public DownloadListener downloading();
+        private final long scale;
+    }
 
-    public void launching();
+    private final long bytes;
 
-    public void finished();
+    public MemoryUnit(long bytes) {
+        this.bytes = bytes;
+    }
 
+    public MemoryUnit(Prefix prefix, int count) {
+        this.bytes = prefix.scale * count;
+    }
 }

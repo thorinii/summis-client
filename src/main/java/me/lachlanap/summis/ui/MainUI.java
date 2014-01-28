@@ -31,6 +31,7 @@ import javax.swing.*;
 import me.lachlanap.summis.ResponseSource;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
+import me.lachlanap.summis.downloader.DownloadListener;
 
 /**
  *
@@ -124,7 +125,7 @@ public class MainUI {
         }
 
         @Override
-        public Object downloading() {
+        public DownloadListener downloading() {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {

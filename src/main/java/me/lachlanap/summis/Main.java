@@ -25,6 +25,8 @@ package me.lachlanap.summis;
 
 import me.lachlanap.config.Configuration;
 import me.lachlanap.summis.ResponseSource.Choice;
+import me.lachlanap.summis.downloader.DownloadListener;
+import me.lachlanap.summis.downloader.Downloader;
 import me.lachlanap.summis.ui.MainUI;
 
 /**
@@ -72,17 +74,22 @@ public class Main {
         }
     }
 
-    private static void updateIfNeedBe(VersionReader versionReader, StatusListener statusListener, ResponseSource responseSource, UpdateInformation versionInfo) throws InterruptedException {
+    private static void updateIfNeedBe(VersionReader versionReader,
+                                       StatusListener statusListener,
+                                       ResponseSource responseSource,
+                                       UpdateInformation versionInfo) throws InterruptedException {
+        Downloader downloader = null;
         switch (versionReader.getPresence()) {
             case NotThere:
-                Object downloadListener = statusListener.downloading();
-                // Grab Latest by nondiff
+                DownloadListener downloadListener = statusListener.downloading();
+                downloader = new Downloader(versionInfo, downloadListener, true);
                 break;
             case Corrupt:
                 ResponseSource.Choice choice = responseSource.updateOrLaunch();
 
                 if (choice == Choice.Update) {
                     downloadListener = statusListener.downloading();
+                    downloader = new Downloader(versionInfo, downloadListener, true);
                 }
                 break;
             case Present:
@@ -91,9 +98,13 @@ public class Main {
                     choice = responseSource.updateOrLaunch();
                     if (choice == Choice.Update) {
                         downloadListener = statusListener.downloading();
+                        downloader = new Downloader(versionInfo, downloadListener, false);
                     }
                 }
                 break;
         }
+
+        if (downloader != null)
+            downloader.go();
     }
 }
