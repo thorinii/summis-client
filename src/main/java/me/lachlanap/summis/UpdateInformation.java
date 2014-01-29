@@ -25,6 +25,7 @@ package me.lachlanap.summis;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import me.lachlanap.summis.downloader.MemoryUnit;
 
 /**
@@ -33,17 +34,32 @@ import me.lachlanap.summis.downloader.MemoryUnit;
  */
 public class UpdateInformation {
 
+    private final Version latest;
+    private final Version current;
+    private final FileSet diffSet;
+    private final FileSet fullSet;
+
+    public UpdateInformation(Version latest, Version current, FileSet diffSet, FileSet fullSet) {
+        this.latest = latest;
+        this.current = current;
+        this.diffSet = diffSet;
+        this.fullSet = fullSet;
+    }
+
     public Version getLatest() {
-        //throw new UnsupportedOperationException("UpdateInformation.getLatest not supported yet.");
-        return new Version(1, 2, 4);
+        return latest;
     }
 
     public FileSet getDiffFileset() {
-        return new FileSet(Collections.EMPTY_LIST);
+        return diffSet;
     }
 
     public FileSet getFullFileset() {
-        return new FileSet(Collections.EMPTY_LIST);
+        return fullSet;
+    }
+
+    public boolean isNewUpdate() {
+        return latest.isGreaterThan(current);
     }
 
     public static class FileSet {
@@ -72,28 +88,80 @@ public class UpdateInformation {
         public MemoryUnit getTotalSize() {
             return totalSize;
         }
+
+        @Override
+        public String toString() {
+            return "FileSet{fileInfos=" + fileInfos + ", totalSize=" + totalSize + '}';
+        }
     }
 
     public static class FileInfo {
 
+        private final String name;
+        private final MemoryUnit size;
+        private final String url;
+        private final String md5;
+        private final String sha1;
+
+        public FileInfo(String name, MemoryUnit size, String url, String md5, String sha1) {
+            this.name = name;
+            this.size = size;
+            this.url = url;
+            this.md5 = md5;
+            this.sha1 = sha1;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 19 * hash + Objects.hashCode(this.name);
+            hash = 19 * hash + Objects.hashCode(this.size);
+            hash = 19 * hash + Objects.hashCode(this.md5);
+            hash = 19 * hash + Objects.hashCode(this.sha1);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            final FileInfo other = (FileInfo) obj;
+            if (!Objects.equals(this.name, other.name))
+                return false;
+            if (!Objects.equals(this.size, other.size))
+                return false;
+            if (!Objects.equals(this.md5, other.md5))
+                return false;
+            if (!Objects.equals(this.sha1, other.sha1))
+                return false;
+            return true;
+        }
+
         public String getName() {
-            throw new UnsupportedOperationException("FileInfo.getName not supported yet.");
+            return name;
         }
 
         public MemoryUnit getSize() {
-            throw new UnsupportedOperationException("FileInfo.getSize not supported yet.");
+            return size;
         }
 
         public String getUrl() {
-            throw new UnsupportedOperationException("FileInfo.getUrl not supported yet.");
+            return url;
         }
 
         public String getMD5Digest() {
-            throw new UnsupportedOperationException("FileInfo.getMD5Digest not supported yet.");
+            return md5;
         }
 
         public String getSHA1Digest() {
-            throw new UnsupportedOperationException("FileInfo.getSHA1Digest not supported yet.");
+            return sha1;
+        }
+
+        @Override
+        public String toString() {
+            return "FileInfo{name=" + name + ", size=" + size + '}';
         }
     }
 }

@@ -84,7 +84,7 @@ public class MemoryUnit {
     }
 
     public float in(Prefix prefix) {
-        return bytes / prefix.scale;
+        return (float) ((double) bytes / prefix.scale);
     }
 
     public Prefix bestFittingPrefix() {
@@ -102,6 +102,6 @@ public class MemoryUnit {
     @Override
     public String toString() {
         Prefix bestFitting = bestFittingPrefix();
-        return in(bestFitting) + bestFitting.abbreviation;
+        return String.format("%.2f%s", in(bestFitting), bestFitting.abbreviation);
     }
 }

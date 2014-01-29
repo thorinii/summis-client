@@ -65,7 +65,7 @@ public class Main {
         VersionReader versionReader = new VersionReader(installRoot);
 
         try {
-            UpdateInformation versionInfo = uig.get();
+            UpdateInformation versionInfo = uig.get(versionReader.getVersion());
             statusListener.foundLatest(versionInfo.getLatest());
 
             updateIfNeedBe(installRoot,
@@ -106,8 +106,7 @@ public class Main {
                 }
                 break;
             case Present:
-                Version version = versionReader.getVersion();
-                if (versionInfo.getLatest().isGreaterThan(version)) {
+                if (versionInfo.isNewUpdate()) {
                     choice = responseSource.updateOrLaunch();
                     if (choice == Choice.Update) {
                         downloadListener = statusListener.downloading();
