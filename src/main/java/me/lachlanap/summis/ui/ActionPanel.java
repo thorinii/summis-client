@@ -24,10 +24,10 @@
 package me.lachlanap.summis.ui;
 
 import javax.swing.JPanel;
+import me.lachlanap.summis.MemoryUnit;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
 import me.lachlanap.summis.downloader.DownloadListener;
-import me.lachlanap.summis.downloader.MemoryUnit;
 
 /**
  *

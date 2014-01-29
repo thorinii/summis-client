@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package me.lachlanap.summis;
+package me.lachlanap.summis.update;
 
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -37,9 +37,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import me.lachlanap.config.Configuration;
+import me.lachlanap.summis.MemoryUnit;
+import me.lachlanap.summis.UpdateInformation;
 import me.lachlanap.summis.UpdateInformation.FileInfo;
 import me.lachlanap.summis.UpdateInformation.FileSet;
-import me.lachlanap.summis.downloader.MemoryUnit;
+import me.lachlanap.summis.Version;
 
 /**
  *

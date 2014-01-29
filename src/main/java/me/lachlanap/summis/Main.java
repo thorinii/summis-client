@@ -30,6 +30,7 @@ import me.lachlanap.summis.ResponseSource.Choice;
 import me.lachlanap.summis.downloader.DownloadListener;
 import me.lachlanap.summis.downloader.Downloader;
 import me.lachlanap.summis.ui.MainUI;
+import me.lachlanap.summis.update.UpdateInformationGrabber;
 
 /**
  *
@@ -50,12 +51,7 @@ public class Main {
     private static void run(Configuration config,
                             StatusListener statusListener,
                             ResponseSource responseSource) throws InterruptedException {
-        Path installRoot;
-        if (config.getString("install.into-user-dir").equals("true"))
-            installRoot = Paths.get(System.getProperty("user.home"));
-        else
-            installRoot = Paths.get(System.getProperty("user.dir"));
-
+        Path installRoot = setupInstallRoot(config);
 
         UpdateInformationGrabber uig = new UpdateInformationGrabber(config);
 
@@ -74,16 +70,27 @@ public class Main {
                            versionInfo);
 
             statusListener.launching();
+            launch(config);
         } catch (RuntimeException re) {
             statusListener.errorChecking(re);
 
             ResponseSource.Choice choice = responseSource.launchOrQuit();
             if (choice == Choice.Launch) {
                 statusListener.launching();
+                launch(config);
             }
         } finally {
             statusListener.finished();
         }
+    }
+
+    private static Path setupInstallRoot(Configuration config) {
+        Path installRoot;
+        if (config.getString("install.into-user-dir").equals("true"))
+            installRoot = Paths.get(System.getProperty("user.home"));
+        else
+            installRoot = Paths.get(System.getProperty("user.dir"));
+        return installRoot;
     }
 
     private static void updateIfNeedBe(Path installRoot,
@@ -118,5 +125,9 @@ public class Main {
 
         if (downloader != null)
             downloader.go();
+    }
+
+    private static void launch(Configuration config) {
+
     }
 }

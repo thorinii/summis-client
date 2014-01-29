@@ -23,23 +23,43 @@
  */
 package me.lachlanap.summis.downloader;
 
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import me.lachlanap.summis.MemoryUnit;
+import me.lachlanap.summis.MemoryUnit.Prefix;
 
 /**
  *
  * @author Lachlan Phillips
  */
-public interface DownloadListener {
+public class CountingFilterOutputStream extends FilterOutputStream {
+    private static final MemoryUnit INTERVAL = new MemoryUnit(Prefix.Kilo, 2);
+    private final DownloadListener listener;
+    private long transferedSoFar;
+    private long lastNotify;
 
-    public void startingDownload(int numberOfFiles, MemoryUnit totalSize);
+    public CountingFilterOutputStream(OutputStream out, DownloadListener listener) {
+        super(out);
+        this.listener = listener;
+        transferedSoFar = 0;
+        lastNotify = 0;
+    }
 
-    public void downloadedSome(MemoryUnit amount);
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        super.write(b, off, len);
+        transferedSoFar += len;
+        while ((transferedSoFar - lastNotify) > INTERVAL.inBytes()) {
+            listener.downloadedSome(INTERVAL);
+            lastNotify += INTERVAL.inBytes();
+        }
+    }
 
-    public void completedADownload();
-
-
-    public void startingVerify(int numberOfFiles);
-
-    public void completedAVerify();
+    @Override
+    public void close() throws IOException {
+        super.close();
+        listener.downloadedSome(new MemoryUnit(transferedSoFar - lastNotify));
+    }
 
 }

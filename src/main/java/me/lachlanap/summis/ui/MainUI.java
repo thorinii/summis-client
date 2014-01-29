@@ -33,7 +33,7 @@ import me.lachlanap.summis.ResponseSource;
 import me.lachlanap.summis.StatusListener;
 import me.lachlanap.summis.Version;
 import me.lachlanap.summis.downloader.DownloadListener;
-import me.lachlanap.summis.downloader.MemoryUnit;
+import me.lachlanap.summis.MemoryUnit;
 
 /**
  *
