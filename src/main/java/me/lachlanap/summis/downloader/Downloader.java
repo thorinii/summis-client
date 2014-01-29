@@ -28,16 +28,13 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import me.lachlanap.summis.UpdateInformation;
 import me.lachlanap.summis.UpdateInformation.FileInfo;
 import me.lachlanap.summis.UpdateInformation.FileSet;
@@ -94,7 +91,8 @@ public class Downloader {
         if (numberOfFiles == 0)
             return;
 
-        deleteTmpDirectory();
+        createDirectory(tmpRoot);
+        createDirectory(binaryRoot);
 
         downloadListener.startingDownload(numberOfFiles, totalSize);
         downloadFiles(fileSet);
@@ -102,7 +100,7 @@ public class Downloader {
         downloadListener.startingVerify(numberOfFiles);
         verifyFiles(fileSet);
 
-        deleteTmpDirectory();
+        deleteDirectory(tmpRoot);
     }
 
     private FileSet getFileSet() {
@@ -112,9 +110,30 @@ public class Downloader {
             return versionInfo.getDiffFileset();
     }
 
-    private void deleteTmpDirectory() {
+    private void createDirectory(Path directory) {
         try {
-            Files.deleteIfExists(tmpRoot);
+            deleteDirectory(directory);
+            Files.createDirectory(directory);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to delete tmp download directory", ex);
+        }
+    }
+
+    private void deleteDirectory(Path directory) {
+        try {
+            if (Files.exists(directory)) {
+                Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if (!Files.isDirectory(file))
+                            Files.delete(file);
+                        return super.visitFile(file, attrs);
+                    }
+
+                });
+                Files.delete(directory);
+            }
         } catch (IOException ex) {
             throw new RuntimeException("Failed to delete tmp download directory", ex);
         }
@@ -124,7 +143,15 @@ public class Downloader {
         List<Callable<Void>> downloaders = new ArrayList<>();
         for (FileInfo info : fileSet.getFiles())
             downloaders.add(new DownloaderCallable(info));
-        EXECUTOR.invokeAll(downloaders);
+
+        List<Future<Void>> futures = EXECUTOR.invokeAll(downloaders);
+        for (Future<Void> future : futures) {
+            try {
+                future.get();
+            } catch (ExecutionException ee) {
+                ee.getCause().printStackTrace();
+            }
+        }
     }
 
     private void verifyFiles(FileSet fileSet) throws InterruptedException {
@@ -171,7 +198,7 @@ public class Downloader {
             HttpRequestFactory factory = new NetHttpTransport().createRequestFactory();
             HttpRequest request = factory.buildGetRequest(downloadUrl);
             request.setReadTimeout(3000);
-            try (OutputStream os = Files.newOutputStream(tmpDownloadTo)) {
+            try (OutputStream os = Files.newOutputStream(tmpDownloadTo, StandardOpenOption.CREATE_NEW)) {
                 HttpResponse response = request.execute();
                 response.download(os);
                 response.disconnect();
@@ -211,6 +238,30 @@ public class Downloader {
 
             downloadListener.completedAVerify();
             return null;
+        }
+    }
+
+    public static class FailedActions {
+
+        public enum Type {
+
+            Download, Verify
+        }
+
+        private final Type action;
+        private final List<FileInfo> failed;
+
+        public FailedActions(Type action, List<FileInfo> failed) {
+            this.action = action;
+            this.failed = failed;
+        }
+
+        public List<FileInfo> getFailed() {
+            return failed;
+        }
+
+        public Type getAction() {
+            return action;
         }
     }
 }

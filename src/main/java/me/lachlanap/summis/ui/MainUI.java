@@ -54,6 +54,7 @@ public class MainUI {
                     window = new JDialog();
                     window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
                     window.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
+                    window.setAlwaysOnTop(true);
 
                     Container c = window.getContentPane();
                     c.setLayout(new BorderLayout());

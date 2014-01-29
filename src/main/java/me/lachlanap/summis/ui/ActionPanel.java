@@ -119,6 +119,7 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
         currentCompleteFiles = 0;
         runningTotal = MemoryUnit.ZERO;
 
+        progressBar.setIndeterminate(false);
         refreshDownloadStatus();
     }
 
@@ -126,16 +127,20 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
     public void completedADownload(MemoryUnit size) {
         currentCompleteFiles++;
         runningTotal = runningTotal.plus(size);
+        refreshDownloadStatus();
     }
 
     @Override
     public void startingVerify(int numberOfFiles) {
-        throw new UnsupportedOperationException("ActionPanel.startingVerify not supported yet.");
+        this.totalFiles = numberOfFiles;
+        currentCompleteFiles = 0;
+        refreshVerifyStatus();
     }
 
     @Override
     public void completedAVerify() {
-        throw new UnsupportedOperationException("ActionPanel.completedAVerify not supported yet.");
+        currentCompleteFiles++;
+        refreshVerifyStatus();
     }
 
     private void refreshDownloadStatus() {
@@ -144,6 +149,13 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
                               currentCompleteFiles, totalFiles,
                               runningTotal.toString(), totalSize.toString()));
         progressBar.setValue((int) (runningTotal.inBytes() * 100 / totalSize.inBytes()));
+    }
+
+    private void refreshVerifyStatus() {
+        progressBar.setString(
+                String.format("Verified %d of %d files...",
+                              currentCompleteFiles, totalFiles));
+        progressBar.setValue((int) (currentCompleteFiles * 100 / totalFiles));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
