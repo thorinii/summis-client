@@ -88,13 +88,13 @@ public class MemoryUnit {
     }
 
     public Prefix bestFittingPrefix() {
-        if (bytes / Prefix.Tera.scale > 1)
+        if (bytes / Prefix.Tera.scale >= 1)
             return Prefix.Tera;
-        if (bytes / Prefix.Giga.scale > 1)
+        if (bytes / Prefix.Giga.scale >= 1)
             return Prefix.Giga;
-        if (bytes / Prefix.Mega.scale > 1)
+        if (bytes / Prefix.Mega.scale >= 1)
             return Prefix.Mega;
-        if (bytes / Prefix.Kilo.scale > 1)
+        if (bytes / Prefix.Kilo.scale >= 1)
             return Prefix.Kilo;
         return Prefix.Byte;
     }

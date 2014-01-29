@@ -36,6 +36,7 @@
   <SubComponents>
     <Component class="javax.swing.JProgressBar" name="progressBar">
       <Properties>
+        <Property name="maximum" type="int" value="1000"/>
         <Property name="string" type="java.lang.String" value="-- not set up --"/>
         <Property name="stringPainted" type="boolean" value="true"/>
       </Properties>

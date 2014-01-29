@@ -26,6 +26,7 @@ package me.lachlanap.summis.ui;
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.*;
 import me.lachlanap.summis.ResponseSource;
@@ -53,8 +54,8 @@ public class MainUI {
                 public void run() {
                     window = new JDialog();
                     window.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                    window.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
                     window.setAlwaysOnTop(true);
+                    window.setLocationRelativeTo(null);
 
                     Container c = window.getContentPane();
                     c.setLayout(new BorderLayout());
@@ -66,8 +67,14 @@ public class MainUI {
                     c.add(actionPanel, BorderLayout.CENTER);
                     c.add(responsePanel, BorderLayout.SOUTH);
 
-                    window.pack();
-                    window.setMinimumSize(new Dimension(window.getSize()));
+                    window.setSize(500, 200);
+                    window.setMaximumSize(new Dimension(500, Integer.MAX_VALUE));
+                    window.setResizable(false);
+
+                    Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
+                    int x = (int) ((dimension.getWidth() - window.getWidth()) / 2);
+                    int y = (int) ((dimension.getHeight() - window.getHeight()) / 2);
+                    window.setLocation(x, y);
                 }
             });
         } catch (InvocationTargetException ite) {
@@ -118,7 +125,7 @@ public class MainUI {
 
                     infoPanel.setMessage(e);
                     window.pack();
-                    window.setMinimumSize(new Dimension(window.getSize()));
+                    window.setSize(500, window.getHeight());
                 }
 
             });
@@ -173,11 +180,21 @@ public class MainUI {
         }
 
         @Override
-        public void completedADownload(final MemoryUnit size) {
+        public void downloadedSome(final MemoryUnit amount) {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    actionPanel.completedADownload(size);
+                    actionPanel.downloadedSome(amount);
+                }
+            });
+        }
+
+        @Override
+        public void completedADownload() {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    actionPanel.completedADownload();
                 }
             });
         }

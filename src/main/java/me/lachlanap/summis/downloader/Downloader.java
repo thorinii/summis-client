@@ -25,6 +25,7 @@ package me.lachlanap.summis.downloader;
 
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,6 +39,7 @@ import java.util.concurrent.*;
 import me.lachlanap.summis.UpdateInformation;
 import me.lachlanap.summis.UpdateInformation.FileInfo;
 import me.lachlanap.summis.UpdateInformation.FileSet;
+import me.lachlanap.summis.downloader.MemoryUnit.Prefix;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -181,7 +183,7 @@ public class Downloader {
 
             Files.move(tmpDownloadTo, destination);
 
-            downloadListener.completedADownload(info.getSize());
+            downloadListener.completedADownload();
             return null;
         }
 
@@ -198,7 +200,10 @@ public class Downloader {
             HttpRequestFactory factory = new NetHttpTransport().createRequestFactory();
             HttpRequest request = factory.buildGetRequest(downloadUrl);
             request.setReadTimeout(3000);
-            try (OutputStream os = Files.newOutputStream(tmpDownloadTo, StandardOpenOption.CREATE_NEW)) {
+            try (OutputStream os
+                    = new CountingFilterOutputStream(Files.newOutputStream(tmpDownloadTo, StandardOpenOption.CREATE_NEW),
+                                                     downloadListener)) {
+
                 HttpResponse response = request.execute();
                 response.download(os);
                 response.disconnect();
@@ -241,27 +246,38 @@ public class Downloader {
         }
     }
 
-    public static class FailedActions {
+    public static class CountingFilterOutputStream extends FilterOutputStream {
 
-        public enum Type {
+        private static final MemoryUnit INTERVAL = new MemoryUnit(Prefix.Kilo, 2);
 
-            Download, Verify
+        private final DownloadListener listener;
+        private long transferedSoFar;
+        private long lastNotify;
+
+        public CountingFilterOutputStream(OutputStream out, DownloadListener listener) {
+            super(out);
+            this.listener = listener;
+            transferedSoFar = 0;
+            lastNotify = 0;
         }
 
-        private final Type action;
-        private final List<FileInfo> failed;
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            super.write(b, off, len);
 
-        public FailedActions(Type action, List<FileInfo> failed) {
-            this.action = action;
-            this.failed = failed;
+            transferedSoFar += len;
+            while ((transferedSoFar - lastNotify) > INTERVAL.inBytes()) {
+                listener.downloadedSome(INTERVAL);
+
+                lastNotify += INTERVAL.inBytes();
+            }
         }
 
-        public List<FileInfo> getFailed() {
-            return failed;
-        }
+        @Override
+        public void close() throws IOException {
+            super.close();
 
-        public Type getAction() {
-            return action;
+            listener.downloadedSome(new MemoryUnit(transferedSoFar - lastNotify));
         }
     }
 }

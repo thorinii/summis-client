@@ -57,6 +57,7 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
 
         progressBar = new javax.swing.JProgressBar();
 
+        progressBar.setMaximum(1000);
         progressBar.setString("-- not set up --");
         progressBar.setStringPainted(true);
 
@@ -124,9 +125,14 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
     }
 
     @Override
-    public void completedADownload(MemoryUnit size) {
+    public void downloadedSome(MemoryUnit amount) {
+        runningTotal = runningTotal.plus(amount);
+        refreshDownloadStatus();
+    }
+
+    @Override
+    public void completedADownload() {
         currentCompleteFiles++;
-        runningTotal = runningTotal.plus(size);
         refreshDownloadStatus();
     }
 
@@ -148,14 +154,14 @@ public class ActionPanel extends JPanel implements StatusListener, DownloadListe
                 String.format("Downloaded %d of %d files, %s of %s...",
                               currentCompleteFiles, totalFiles,
                               runningTotal.toString(), totalSize.toString()));
-        progressBar.setValue((int) (runningTotal.inBytes() * 100 / totalSize.inBytes()));
+        progressBar.setValue((int) ((float) runningTotal.inBytes() * 1000 / totalSize.inBytes()));
     }
 
     private void refreshVerifyStatus() {
         progressBar.setString(
                 String.format("Verified %d of %d files...",
                               currentCompleteFiles, totalFiles));
-        progressBar.setValue((int) (currentCompleteFiles * 100 / totalFiles));
+        progressBar.setValue((int) ((float) currentCompleteFiles * 1000 / totalFiles));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

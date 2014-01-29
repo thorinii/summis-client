@@ -31,8 +31,10 @@ public interface DownloadListener {
 
     public void startingDownload(int numberOfFiles, MemoryUnit totalSize);
 
+    public void downloadedSome(MemoryUnit amount);
 
-    public void completedADownload(MemoryUnit size);
+    public void completedADownload();
+
 
     public void startingVerify(int numberOfFiles);
 
