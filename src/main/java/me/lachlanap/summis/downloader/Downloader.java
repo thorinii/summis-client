@@ -26,9 +26,12 @@ package me.lachlanap.summis.downloader;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -38,6 +41,7 @@ import java.util.concurrent.ThreadFactory;
 import me.lachlanap.summis.UpdateInformation;
 import me.lachlanap.summis.UpdateInformation.FileInfo;
 import me.lachlanap.summis.UpdateInformation.FileSet;
+import org.apache.commons.codec.binary.Hex;
 
 /**
  *
@@ -102,12 +106,10 @@ public class Downloader {
     }
 
     private FileSet getFileSet() {
-        FileSet fileSet;
         if (downloadFresh)
-            fileSet = versionInfo.getFullFileset();
+            return versionInfo.getFullFileset();
         else
-            fileSet = versionInfo.getDiffFileset();
-        return fileSet;
+            return versionInfo.getDiffFileset();
     }
 
     private void deleteTmpDirectory() {
@@ -187,8 +189,28 @@ public class Downloader {
 
         @Override
         public Void call() throws Exception {
+            Path file = binaryRoot.resolve(info.getName());
+
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            MessageDigest sha1 = MessageDigest.getInstance("SHA-1");
+            byte[] buffer = new byte[1024];
+            try (InputStream is = Files.newInputStream(file)) {
+                DigestInputStream dis
+                        = new DigestInputStream(
+                                new DigestInputStream(is, md5),
+                                sha1);
+
+                while (dis.read(buffer) != -1)
+                    ;
+            }
+            String md5Digest = new String(Hex.encodeHex(md5.digest()));
+            String sha1Digest = new String(Hex.encodeHex(sha1.digest()));
+
+            if (!md5Digest.equals(info.getMD5Digest()) || !sha1Digest.equals(info.getSHA1Digest()))
+                throw new RuntimeException(info.getName() + " failed verification");
+
             downloadListener.completedAVerify();
-            throw new UnsupportedOperationException(".call not supported yet.");
+            return null;
         }
     }
 }

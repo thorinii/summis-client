@@ -76,6 +76,10 @@ public class UpdateInformation {
 
     public static class FileInfo {
 
+        public String getName() {
+            throw new UnsupportedOperationException("FileInfo.getName not supported yet.");
+        }
+
         public MemoryUnit getSize() {
             throw new UnsupportedOperationException("FileInfo.getSize not supported yet.");
         }
@@ -84,8 +88,12 @@ public class UpdateInformation {
             throw new UnsupportedOperationException("FileInfo.getUrl not supported yet.");
         }
 
-        public String getName() {
-            throw new UnsupportedOperationException("FileInfo.getName not supported yet.");
+        public String getMD5Digest() {
+            throw new UnsupportedOperationException("FileInfo.getMD5Digest not supported yet.");
+        }
+
+        public String getSHA1Digest() {
+            throw new UnsupportedOperationException("FileInfo.getSHA1Digest not supported yet.");
         }
     }
 }
