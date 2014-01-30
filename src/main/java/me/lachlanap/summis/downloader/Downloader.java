@@ -23,10 +23,7 @@
  */
 package me.lachlanap.summis.downloader;
 
-import com.google.api.client.http.*;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -148,6 +145,34 @@ public class Downloader {
             } catch (ExecutionException ee) {
                 ee.getCause().printStackTrace();
             }
+        }
+
+        deleteInvalidFiles();
+    }
+
+    private void deleteInvalidFiles() {
+        try {
+            Files.walkFileTree(binaryRoot, new SimpleFileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (!Files.isDirectory(file)) {
+                        String relativeFilename = binaryRoot.relativize(file).toString();
+
+                        boolean found = false;
+                        for (FileInfo info : versionInfo.getFullFileset().getFiles())
+                            if (info.getName().equals(relativeFilename))
+                                found = true;
+
+                        if (!found)
+                            Files.delete(file);
+                    }
+                    return super.visitFile(file, attrs);
+                }
+
+            });
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to delete tmp download directory", ex);
         }
     }
 

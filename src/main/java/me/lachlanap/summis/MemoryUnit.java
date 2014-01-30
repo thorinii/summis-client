@@ -23,6 +23,8 @@
  */
 package me.lachlanap.summis;
 
+import java.text.DecimalFormat;
+
 /**
  *
  * @author Lachlan Phillips
@@ -47,6 +49,16 @@ public class MemoryUnit {
     }
 
     public static final MemoryUnit ZERO = new MemoryUnit(0);
+
+    private static final ThreadLocal<DecimalFormat> formatters = new ThreadLocal<DecimalFormat>() {
+        @Override
+        protected DecimalFormat initialValue() {
+            DecimalFormat format = new DecimalFormat();
+            format.setMaximumFractionDigits(2);
+            format.setMinimumFractionDigits(0);
+            return format;
+        }
+    };
 
     private final long bytes;
 
@@ -102,6 +114,8 @@ public class MemoryUnit {
     @Override
     public String toString() {
         Prefix bestFitting = bestFittingPrefix();
-        return String.format("%.2f%s", in(bestFitting), bestFitting.abbreviation);
+
+        String decimalValue = formatters.get().format(in(bestFitting));
+        return String.format("%s%s", decimalValue, bestFitting.abbreviation);
     }
 }

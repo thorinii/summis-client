@@ -29,6 +29,7 @@ import me.lachlanap.config.Configuration;
 import me.lachlanap.summis.ResponseSource.Choice;
 import me.lachlanap.summis.downloader.DownloadListener;
 import me.lachlanap.summis.downloader.Downloader;
+import me.lachlanap.summis.launcher.Launcher;
 import me.lachlanap.summis.ui.MainUI;
 import me.lachlanap.summis.update.UpdateInformationGrabber;
 
@@ -70,14 +71,14 @@ public class Main {
                            versionInfo);
 
             statusListener.launching();
-            launch(config);
+            launch(config, installRoot);
         } catch (RuntimeException re) {
             statusListener.errorChecking(re);
 
             ResponseSource.Choice choice = responseSource.launchOrQuit();
             if (choice == Choice.Launch) {
                 statusListener.launching();
-                launch(config);
+                launch(config, installRoot);
             }
         } finally {
             statusListener.finished();
@@ -127,7 +128,8 @@ public class Main {
             downloader.go();
     }
 
-    private static void launch(Configuration config) {
-
+    private static void launch(Configuration config, Path installRoot) {
+        Launcher launcher = new Launcher(config, installRoot);
+        launcher.launch();
     }
 }
