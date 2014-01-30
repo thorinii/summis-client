@@ -23,6 +23,8 @@
  */
 package me.lachlanap.summis;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import me.lachlanap.config.Configuration;
@@ -59,16 +61,18 @@ public class Main {
         statusListener.checking();
         uig.begin();
 
-        VersionReader versionReader = new VersionReader(installRoot);
+        VersionRWer versionRWer = new VersionRWer(installRoot);
 
         try {
-            UpdateInformation versionInfo = uig.get(versionReader.getVersion());
+            UpdateInformation versionInfo = uig.get(versionRWer.getVersionElse(Version.ZERO));
             statusListener.foundLatest(versionInfo.getLatest());
 
             updateIfNeedBe(installRoot,
-                           versionReader,
+                           versionRWer,
                            statusListener, responseSource,
                            versionInfo);
+
+            versionRWer.write(versionInfo.getLatest());
 
             statusListener.launching();
             launch(config, installRoot);
@@ -86,16 +90,26 @@ public class Main {
     }
 
     private static Path setupInstallRoot(Configuration config) {
-        Path installRoot;
-        if (config.getString("install.into-user-dir").equals("true"))
-            installRoot = Paths.get(System.getProperty("user.home"));
-        else
-            installRoot = Paths.get(System.getProperty("user.dir"));
+        String installDirectoryTemplate = config.getString("install.path");
+
+        String installDirectory = installDirectoryTemplate
+                .replace("%userhome", System.getProperty("user.home"))
+                .replace("%cwd", System.getProperty("user.dir"));
+        Path installRoot = Paths.get(installDirectory);
+
+        if (Files.notExists(installRoot)) {
+            try {
+                Files.createDirectory(installRoot);
+            } catch (IOException ioe) {
+                throw new RuntimeException("Failed to create application directory", ioe);
+            }
+        }
+
         return installRoot;
     }
 
     private static void updateIfNeedBe(Path installRoot,
-                                       VersionReader versionReader,
+                                       VersionRWer versionReader,
                                        StatusListener statusListener,
                                        ResponseSource responseSource,
                                        UpdateInformation versionInfo) throws InterruptedException {

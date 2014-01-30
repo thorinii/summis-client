@@ -25,6 +25,7 @@ package me.lachlanap.summis;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,26 +34,25 @@ import java.nio.file.Path;
  *
  * @author Lachlan Phillips
  */
-public class VersionReader {
+public class VersionRWer {
 
     public enum PresenceStatus {
 
         NotThere, Corrupt, Present
     }
 
-    private final Path installRoot;
+    private final Path versionFile;
 
     private PresenceStatus status;
     private Version version;
 
-    public VersionReader(Path installRoot) {
-        this.installRoot = installRoot;
+    public VersionRWer(Path installRoot) {
+        this.versionFile = installRoot.resolve("version");
+
         load();
     }
 
     private void load() {
-        Path versionFile = installRoot.resolve("version");
-
         if (!Files.exists(versionFile)) {
             status = PresenceStatus.NotThere;
         } else {
@@ -97,5 +97,23 @@ public class VersionReader {
         if (status != PresenceStatus.Present)
             throw new IllegalStateException("Cannot query version when it is not present");
         return version;
+    }
+
+    public Version getVersionElse(Version def) {
+        if (status != PresenceStatus.Present)
+            return def;
+        return version;
+    }
+
+    public void write(Version newVersion) {
+        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(versionFile, StandardCharsets.UTF_8))) {
+            String versionString = newVersion.toString();
+
+            writer.println(versionString);
+            writer.println(versionString.hashCode());
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            status = PresenceStatus.Corrupt;
+        }
     }
 }

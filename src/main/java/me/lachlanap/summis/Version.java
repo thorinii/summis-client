@@ -37,6 +37,8 @@ public final class Version implements Comparable<Version> {
     public static final int MINOR = 1;
     public static final int PATCH = 2;
 
+    public static final Version ZERO = new Version(0);
+
     private final int[] numbers;
     private final String devStatus;
 
